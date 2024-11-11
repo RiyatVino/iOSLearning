@@ -5,6 +5,7 @@
 
 # Table of Contents
 [Swift](#Swift)
+
 [1. Variables and Constants](#Variables and Constants)
 [2. Data Types and Type Inference](#Data Types and Type Inference)
 [3. Optionals](#Optionals)
