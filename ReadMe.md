@@ -7,9 +7,13 @@
 [Swift](#Swift)
 
 [1. Variables and Constants](#Variables and Constants)
+
 [2. Data Types and Type Inference](#Data Types and Type Inference)
+
 [3. Optionals](#Optionals)
+
 [4. Functions](#Functions)
+
 [5. Closures](#Closures)
 [6. Enumerations](#Enumerations)
 [7. Structures and Classes](#Structures and Classes)
