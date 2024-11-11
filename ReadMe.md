@@ -596,6 +596,7 @@ In general:
 - Use `static` when you want a shared, type-level property or method that cannot change in subclasses.
 - Use `class` in classes when you expect subclasses to override the behavior.
 
+--- 
 
 Swift has a more robust and type-safe approach to handling optionals compared to Objective-C, making it safer and more expressive for handling `nil` values. Here’s how Swift’s approach to optionals improves on Objective-C’s `nil` handling, with examples.
 
@@ -1285,7 +1286,7 @@ for shape in shapes {
 Swift supports all these OOP principles and offers powerful features like **protocol-oriented programming**, making it a modern and flexible language for object-oriented development.
 
 
-
+---
 
 ### **URLSession in Swift**
 
@@ -1498,6 +1499,7 @@ extension ViewController: URLSessionDownloadDelegate {
 - You can easily handle success and failure by working with completion handlers and URLSession delegates.
 - Swift’s simplicity and the power of **URLSession** allow for efficient and flexible network communication, making it essential for any app that interacts with web APIs.
 
+--- 
 
 ### **SwiftData vs Core Data**
 
@@ -1671,7 +1673,7 @@ class ViewController: UIViewController {
 
 Both frameworks are useful depending on the complexity of your app and the features you need to manage data effectively.
 
-
+---
 
 ### **SSL Pinning in iOS**
 
@@ -1826,7 +1828,7 @@ func urlSession(_ session: URLSession,
 
 SSL Pinning is an important technique for securing communication in iOS apps, especially in cases where sensitive data is exchanged. By ensuring that the app only trusts a specific server’s certificate or public key, you can mitigate risks from MITM attacks and enhance the app’s overall security. However, it introduces challenges such as certificate management and potential app updates whenever certificates change. Use SSL pinning wisely, particularly for apps that handle critical or sensitive information.
 
-
+---
 
 # SwiftUI
 
@@ -1979,6 +1981,7 @@ While **UIKit** is a more mature and feature-rich framework, **SwiftUI** is Appl
 - SwiftUI simplifies app development and accelerates prototyping, but for certain complex UIs or legacy projects, UIKit might still be necessary.
 
 SwiftUI is the future of UI development in the Apple ecosystem, and it continues to improve with every new version of iOS.
+---
 
 ### **1. SwiftUI Basic Concepts**
 
@@ -2456,6 +2459,6 @@ SwiftUI integrates seamlessly with Combine, a framework for reactive programming
 4. **Use `@EnvironmentObject` for app-wide shared data**, especially when multiple views require the same information.
 5. **Use `@StateObject` to create and manage an observable object within a view** that will be the primary owner of that object. This is especially useful for view models in the MVVM architecture.
 
-
+---
 
 
