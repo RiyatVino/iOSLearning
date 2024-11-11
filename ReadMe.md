@@ -1285,6 +1285,549 @@ for shape in shapes {
 Swift supports all these OOP principles and offers powerful features like **protocol-oriented programming**, making it a modern and flexible language for object-oriented development.
 
 
+
+
+### **URLSession in Swift**
+
+`URLSession` is a class in Swift that provides an API for downloading and uploading data over the network. It handles tasks like making HTTP requests, downloading files, uploading files, and background downloads. It is part of the **Foundation** framework and allows developers to interact with web services, fetch data, and send data to remote servers.
+
+---
+
+### **Key Features of URLSession:**
+- **Data tasks**: Used for simple data transfers, such as retrieving JSON or downloading/uploading data.
+- **Download tasks**: Used to download files to a temporary location.
+- **Upload tasks**: Used to upload files or data to a server.
+- **Background sessions**: Used for long-running network tasks (e.g., downloading files in the background when the app is not active).
+
+### **Basic URLSession Example**
+
+In this example, we will use `URLSession` to perform a simple HTTP GET request to retrieve data from a URL.
+
+#### **Steps:**
+1. Create a URL.
+2. Create a `URLSession` instance.
+3. Create a data task using `URLSession`.
+4. Start the data task and handle the response.
+
+#### **Example: URLSession GET Request**
+
+```swift
+import Foundation
+
+// Define the URL
+let url = URL(string: "https://jsonplaceholder.typicode.com/posts/1")!
+
+// Create a URLSession instance
+let session = URLSession.shared
+
+// Create a data task to fetch the data
+let task = session.dataTask(with: url) { data, response, error in
+    // Check if there was an error
+    if let error = error {
+        print("Error occurred: \(error)")
+        return
+    }
+    
+    // Ensure we received valid data
+    guard let data = data else {
+        print("No data received")
+        return
+    }
+    
+    // Optionally, check the response
+    if let httpResponse = response as? HTTPURLResponse {
+        if httpResponse.statusCode == 200 {
+            // Convert the data to a string (or JSON if needed)
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("Response data: \(jsonString)")
+            }
+        } else {
+            print("HTTP Error: \(httpResponse.statusCode)")
+        }
+    }
+}
+
+// Start the task
+task.resume()
+```
+
+#### **Explanation:**
+1. **URL**: The URL of the resource you want to fetch is defined (`https://jsonplaceholder.typicode.com/posts/1`).
+2. **URLSession.shared**: This provides a shared singleton session object that can be used for most networking tasks.
+3. **dataTask**: We create a data task using the `dataTask(with:)` method of `URLSession`, passing in the URL and a completion handler.
+4. **Completion Handler**: The closure receives the response (`data`, `response`, and `error`). It handles the success and failure of the request:
+    - If the request is successful, it prints the response data.
+    - If there is an error, it prints the error message.
+5. **task.resume()**: Starts the network task.
+
+#### **Output:**
+The output will display the raw JSON data received from the URL in the console. The response will be in the form of a string, but you can parse it into a structured format like a dictionary using `JSONDecoder` if necessary.
+
+---
+
+### **URLSession POST Request Example**
+
+To send data (e.g., in a `POST` request), you need to configure the request with the proper HTTP method and body.
+
+#### **Example: URLSession POST Request**
+
+```swift
+import Foundation
+
+// Define the URL
+let url = URL(string: "https://jsonplaceholder.typicode.com/posts")!
+
+// Create the URLRequest
+var request = URLRequest(url: url)
+request.httpMethod = "POST"
+
+// Create the JSON body for the request
+let json: [String: Any] = [
+    "title": "foo",
+    "body": "bar",
+    "userId": 1
+]
+request.httpBody = try? JSONSerialization.data(withJSONObject: json, options: [])
+
+// Set the request headers
+request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+// Create a URLSession instance
+let session = URLSession.shared
+
+// Create the data task to perform the POST request
+let task = session.dataTask(with: request) { data, response, error in
+    // Check for errors
+    if let error = error {
+        print("Error occurred: \(error)")
+        return
+    }
+    
+    // Ensure we received valid data
+    guard let data = data else {
+        print("No data received")
+        return
+    }
+    
+    // Optionally, check the response
+    if let httpResponse = response as? HTTPURLResponse {
+        if httpResponse.statusCode == 201 {
+            // Convert the response data to a string
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("Response data: \(jsonString)")
+            }
+        } else {
+            print("HTTP Error: \(httpResponse.statusCode)")
+        }
+    }
+}
+
+// Start the task
+task.resume()
+```
+
+#### **Explanation:**
+1. **URLRequest**: A `URLRequest` is created, and we set the HTTP method to `POST` using `httpMethod`.
+2. **HTTP Body**: We define a dictionary `json`, convert it to `Data` using `JSONSerialization`, and assign it to the request’s `httpBody`.
+3. **Content-Type Header**: We set the `Content-Type` to `application/json` since we are sending JSON data.
+4. **Sending Data**: The data task sends the request and processes the response.
+
+#### **Output:**
+The server should return a response (typically a status code like `201 Created` for successful POST requests). The response will be in JSON format, and you can parse it accordingly.
+
+---
+
+### **Handling Background Downloads**
+
+`URLSession` also supports **background downloads**, which allow your app to download files even when it’s not in the foreground. Here’s an example of how you would handle a background download.
+
+#### **Example: Background Download Task**
+
+```swift
+import UIKit
+
+class ViewController: UIViewController {
+    
+    let downloadURL = URL(string: "https://example.com/largefile.zip")!
+    var downloadTask: URLSessionDownloadTask?
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        // Create a background session configuration
+        let configuration = URLSessionConfiguration.background(withIdentifier: "com.example.myapp.background")
+        
+        // Create a URLSession with a delegate for handling background events
+        let session = URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
+        
+        // Start the download task
+        downloadTask = session.downloadTask(with: downloadURL)
+        downloadTask?.resume()
+    }
+}
+
+extension ViewController: URLSessionDownloadDelegate {
+    // Delegate method for handling completion of background download
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+        print("Download finished to: \(location)")
+        
+        // Move the downloaded file from temporary location to a permanent one
+        let destinationURL = FileManager.default.temporaryDirectory.appendingPathComponent("downloadedFile.zip")
+        
+        do {
+            try FileManager.default.moveItem(at: location, to: destinationURL)
+            print("File moved to: \(destinationURL)")
+        } catch {
+            print("Error moving file: \(error)")
+        }
+    }
+}
+```
+
+#### **Explanation**:
+1. **Background Session**: A `URLSessionConfiguration` is created with the background configuration, and a session is created using it.
+2. **Download Delegate**: The `URLSessionDownloadDelegate` is implemented to handle background download events like `didFinishDownloadingTo`.
+3. **File Handling**: When the download finishes, the file is moved from the temporary location to a permanent location on disk.
+
+---
+
+### **Conclusion**
+
+- **URLSession** provides powerful tools for handling network requests in Swift.
+- It supports various types of tasks like **GET** and **POST** requests, **background downloads**, and **uploads**.
+- You can easily handle success and failure by working with completion handlers and URLSession delegates.
+- Swift’s simplicity and the power of **URLSession** allow for efficient and flexible network communication, making it essential for any app that interacts with web APIs.
+
+
+### **SwiftData vs Core Data**
+
+`Core Data` and `SwiftData` are both powerful frameworks for data management on iOS, but they are used in different contexts and have different approaches. In this section, we will explore both of these frameworks in detail, comparing their features, use cases, and how they can be used to manage data.
+
+#### **What is Core Data?**
+Core Data is Apple's framework for managing the model layer of an application. It provides a set of APIs to manage object graphs and persist data in a database, supporting features like data modeling, querying, data validation, and relationships.
+
+**Core Data's Main Features:**
+- **Persistence Layer**: It provides the ability to persist data to a database (SQLite, Binary, or In-Memory).
+- **Object-Graph Management**: It manages objects and their relationships, allowing for rich object graphs.
+- **Querying**: You can perform complex queries on data using `NSFetchRequest`.
+- **Data Model**: You can create a data model (schema) with entities and attributes, defining relationships between objects.
+- **Performance**: Optimized for managing large datasets with caching and lazy loading.
+
+#### **What is SwiftData?**
+SwiftData is a newer framework introduced by Apple to simplify data management for Swift developers. While Core Data focuses heavily on object graph management and persistent storage, SwiftData emphasizes using Swift's modern features, such as `SwiftUI` integration, better API design, and easier configuration.
+
+SwiftData provides an easier-to-use API compared to Core Data, specifically targeting simplicity and integration with Swift syntax, and may eventually replace Core Data in many use cases.
+
+**SwiftData's Main Features:**
+- **Declarative Syntax**: SwiftData integrates well with Swift's declarative style and combines naturally with SwiftUI.
+- **Auto-Synchronization**: Changes made to the model automatically sync with persistent storage.
+- **Type Safety**: SwiftData is more type-safe and integrates well with Swift’s features like property wrappers and generics.
+- **Integration with SwiftUI**: It is designed with SwiftUI in mind, making it easier to use in modern iOS apps with declarative UI.
+
+---
+
+### **Core Data vs SwiftData: Key Differences**
+
+| Feature                  | **Core Data**                          | **SwiftData**                              |
+|--------------------------|----------------------------------------|--------------------------------------------|
+| **Declarative Syntax**    | Requires explicit object graph setup and manual binding. | Declarative, integrates seamlessly with SwiftUI. |
+| **Data Model**            | Uses `NSManagedObject` to represent entities. | Uses `@Model` and `@Attribute` annotations for data model objects. |
+| **Persistence Layer**     | Uses SQLite, Binary, or In-Memory stores. | Similar persistence options but more modern approach to auto-synchronization. |
+| **Querying**              | Uses `NSFetchRequest` and predicates.  | Relies more on simple property accessors and Swift’s built-in filtering capabilities. |
+| **Complexity**            | More complex and boilerplate code.     | More simple and Swift-friendly, designed for less boilerplate. |
+| **SwiftUI Integration**   | Works with SwiftUI, but requires more setup. | Native support for SwiftUI with minimal configuration. |
+| **Performance**           | Highly optimized for complex datasets and relationships. | Likely similar in performance, but still evolving. |
+| **Support**               | Mature and widely used.                | Newer and evolving, but designed to improve developer experience. |
+
+---
+
+### **Core Data Example**
+
+Let's start with a basic Core Data example, where we create a simple model (`Person`) and store it in a persistent store.
+
+#### 1. **Create a Core Data Model**
+
+- Open your Xcode project and select "File" -> "New" -> "File" -> "Data Model" to create a `.xcdatamodeld` file.
+- In the model, define an entity `Person` with attributes like `name` (String) and `age` (Integer).
+
+#### 2. **Set up Core Data Stack**
+
+We need to configure the Core Data stack, which includes a `persistentContainer` to manage the model.
+
+```swift
+import UIKit
+import CoreData
+
+class ViewController: UIViewController {
+    
+    // Get the Core Data context
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        // Creating a new Person object
+        let person = Person(context: context)
+        person.name = "John"
+        person.age = 25
+        
+        // Save the object to Core Data
+        do {
+            try context.save()
+            print("Person saved!")
+        } catch {
+            print("Failed to save person: \(error)")
+        }
+        
+        // Fetching data
+        let fetchRequest: NSFetchRequest<Person> = Person.fetchRequest()
+        do {
+            let persons = try context.fetch(fetchRequest)
+            for person in persons {
+                print("Name: \(person.name ?? "Unknown"), Age: \(person.age)")
+            }
+        } catch {
+            print("Failed to fetch persons: \(error)")
+        }
+    }
+}
+```
+
+#### **Explanation:**
+- **Core Data Stack**: We are using the `persistentContainer` from the AppDelegate to get the context.
+- **Saving**: A new `Person` object is created and saved to the persistent store using `context.save()`.
+- **Fetching**: We use a `fetchRequest` to get all stored `Person` objects.
+
+---
+
+### **SwiftData Example**
+
+Now, let's look at an example of using **SwiftData** to achieve the same functionality with less boilerplate code.
+
+#### 1. **Define the Data Model**
+
+Instead of defining the data model in the `.xcdatamodeld` file, we use Swift’s property wrappers like `@Model` and `@Attribute` to define a model.
+
+```swift
+import SwiftData
+
+@Model struct Person {
+    @Attribute(.primaryKey) var id: UUID
+    @Attribute(.required) var name: String
+    @Attribute(.required) var age: Int
+}
+```
+
+#### 2. **Setting Up and Using SwiftData**
+
+To save and fetch data using SwiftData, we can do it in a more declarative and concise manner.
+
+```swift
+import SwiftData
+
+class ViewController: UIViewController {
+    // Define the SwiftData context (auto-synchronized with persistent storage)
+    let context = try! Context()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        // Create a new Person object
+        let person = Person(name: "John", age: 25)
+        
+        // Save the person
+        try! context.save()
+        
+        // Fetching persons
+        let persons = try! context.fetch(Person.self)
+        
+        for person in persons {
+            print("Name: \(person.name), Age: \(person.age)")
+        }
+    }
+}
+```
+
+#### **Explanation:**
+- **@Model**: The `Person` model is defined using SwiftData's `@Model` and `@Attribute` decorators.
+- **Auto-Synchronization**: SwiftData automatically syncs the context with persistent storage when saving data.
+- **Fetching**: We fetch all the `Person` objects from the context with `context.fetch()` in a declarative style.
+
+---
+
+### **Key Differences in Practice**
+
+- **Core Data** requires you to define your data model in a `.xcdatamodeld` file and then use `NSManagedObject` for object manipulation. You'll also need to handle the `NSFetchRequest` and manage relationships manually.
+- **SwiftData** makes data management easier by using a declarative syntax (`@Model` and `@Attribute`) and providing automatic persistence management. It also integrates seamlessly with Swift’s syntax and modern paradigms.
+
+---
+
+### **Conclusion**
+
+- **Core Data** is a mature and flexible framework for managing data, handling complex object graphs, and providing features like migrations, relationships, and versioning.
+- **SwiftData** is a newer framework that simplifies data management by providing a declarative API with automatic synchronization and better integration with Swift and SwiftUI.
+- **When to use Core Data**: If you need to handle complex data models with advanced features like relationships, querying, and large datasets.
+- **When to use SwiftData**: If you prefer a simpler, Swift-friendly API with automatic data synchronization, especially if you are building an app with SwiftUI and want to avoid boilerplate code.
+
+Both frameworks are useful depending on the complexity of your app and the features you need to manage data effectively.
+
+
+
+### **SSL Pinning in iOS**
+
+SSL Pinning (also called **certificate pinning**) is a security technique used to ensure that your app communicates only with trusted servers. It works by hardcoding the server's public key or certificate into your app, which prevents attackers from using fake certificates to intercept or manipulate communications between your app and the server.
+
+### **Why is SSL Pinning Important?**
+
+In the context of iOS apps, SSL pinning helps protect against **man-in-the-middle (MITM)** attacks. When SSL pinning is enabled, even if an attacker can intercept the communication (e.g., through a rogue Wi-Fi hotspot), they won't be able to decrypt the data unless they have the exact pinned certificate or public key.
+
+### **How SSL Pinning Works**
+
+1. **Normal SSL/TLS Communication**: When your app communicates with a server over HTTPS, the app checks the server's SSL certificate against the system's trusted certificate store (managed by the operating system). If the certificate is valid and trusted, the connection proceeds.
+  
+2. **With SSL Pinning**: Before establishing the connection, the app checks the server's certificate or public key against the pinned certificate or public key (which is stored locally in the app). If the certificate matches, the communication proceeds; otherwise, the connection is blocked.
+
+### **Types of SSL Pinning**
+
+1. **Certificate Pinning**: You pin the entire certificate (server's public key certificate) in your app. This ensures that only that specific certificate can be trusted.
+   
+2. **Public Key Pinning**: You pin the public key of the certificate. Even if the server's certificate changes (e.g., due to renewal), as long as the public key remains the same, the connection will be trusted.
+
+### **How to Implement SSL Pinning in iOS**
+
+#### **Step 1: Import the Server’s Certificate or Public Key**
+To implement SSL pinning, you need to have access to the server's certificate or its public key. The certificate is usually in PEM or DER format.
+
+1. Obtain the **public key** or **certificate** from the server.
+2. Convert the certificate to a `.der` or `.pem` file if it’s not already in the correct format.
+3. Add the certificate to your Xcode project by dragging it into the project navigator. Make sure it's included in the app bundle.
+
+#### **Step 2: SSL Pinning Using URLSessionDelegate**
+
+In your app, you'll need to implement the `URLSessionDelegate` methods to handle SSL pinning validation.
+
+##### **Example: Certificate Pinning with URLSession**
+
+Here's a basic example of how you can implement SSL Pinning in iOS using the `URLSessionDelegate`:
+
+```swift
+import UIKit
+import Foundation
+
+class SSLPinningManager: NSObject, URLSessionDelegate {
+    
+    // Method to create and configure URLSession
+    func createPinnedSession() {
+        let url = URL(string: "https://example.com/api")!
+        var request = URLRequest(url: url)
+        
+        // Create URLSession with custom delegate
+        let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+        let task = session.dataTask(with: request) { data, response, error in
+            // Handle the response
+            if let error = error {
+                print("Error: \(error)")
+                return
+            }
+            // Handle the data response
+            if let data = data {
+                print("Data: \(data)")
+            }
+        }
+        
+        task.resume()
+    }
+    
+    // URLSessionDelegate method to implement SSL pinning
+    func urlSession(_ session: URLSession, 
+                    didReceive challenge: URLAuthenticationChallenge, 
+                    completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        
+        // 1. Check if the challenge is a server trust challenge
+        if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust {
+            // 2. Get the server's certificate
+            let serverTrust = challenge.protectionSpace.serverTrust!
+            
+            // 3. Load the pinned certificate
+            if let path = Bundle.main.path(forResource: "server_cert", ofType: "der"),
+               let pinnedCertificateData = try? Data(contentsOf: URL(fileURLWithPath: path)) {
+                
+                // 4. Compare the server's certificate to the pinned certificate
+                if let serverCertificate = SecTrustCopyCertificateAtIndex(serverTrust, 0) {
+                    let serverCertificateData = (serverCertificate as! SecCertificate).data
+                    if serverCertificateData == pinnedCertificateData {
+                        // 5. The certificate matches, so allow the connection
+                        completionHandler(.useCredential, URLCredential(trust: serverTrust))
+                    } else {
+                        // 6. The certificate does not match, so block the connection
+                        completionHandler(.cancelAuthenticationChallenge, nil)
+                    }
+                }
+            }
+        }
+    }
+}
+
+```
+
+#### **Explanation of Code:**
+1. **URLSessionDelegate**: The `urlSession(_:didReceive:completionHandler:)` method is used to handle the server trust challenge. This is where the certificate pinning takes place.
+2. **Server Trust**: The `challenge.protectionSpace.serverTrust` property gives you access to the server's certificate chain.
+3. **Pinned Certificate**: The certificate or public key is added as a `.der` file to the app bundle. You load it into your app using `Data(contentsOf:)`.
+4. **Certificate Comparison**: The certificate from the server is compared to the pinned certificate. If they match, the connection is allowed. If not, the connection is cancelled using `completionHandler(.cancelAuthenticationChallenge)`.
+
+#### **Step 3: Handling Pinning with Public Key**
+If you want to pin the public key instead of the certificate, you would follow a similar approach but instead compare the **public key** from the certificate rather than the certificate itself.
+
+```swift
+func urlSession(_ session: URLSession, 
+                didReceive challenge: URLAuthenticationChallenge, 
+                completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+    
+    if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust {
+        let serverTrust = challenge.protectionSpace.serverTrust!
+        
+        // Load the pinned public key
+        if let path = Bundle.main.path(forResource: "pinned_public_key", ofType: "der"),
+           let pinnedPublicKeyData = try? Data(contentsOf: URL(fileURLWithPath: path)) {
+            
+            // Extract the public key from the server's certificate
+            if let serverCertificate = SecTrustCopyCertificateAtIndex(serverTrust, 0) {
+                let serverPublicKey = SecCertificateCopyKey(serverCertificate as! SecCertificate)
+                let serverPublicKeyData = serverPublicKey as! Data
+                
+                // Compare the public keys
+                if serverPublicKeyData == pinnedPublicKeyData {
+                    // Allow connection
+                    completionHandler(.useCredential, URLCredential(trust: serverTrust))
+                } else {
+                    // Block connection
+                    completionHandler(.cancelAuthenticationChallenge, nil)
+                }
+            }
+        }
+    }
+}
+```
+
+### **Advantages of SSL Pinning:**
+
+1. **Protection Against MITM Attacks**: By pinning the server's certificate or public key, you can prevent attackers from using fake certificates to intercept communication.
+2. **Stronger Trust**: Even if an attacker can get a valid certificate from a certificate authority, they would still need the exact certificate or public key to spoof the server.
+3. **Increased Security**: Provides an additional layer of security on top of the standard HTTPS verification.
+
+### **Disadvantages of SSL Pinning:**
+
+1. **Certificate Expiration/Renewal**: If the server’s certificate changes or expires, your app needs to be updated with the new certificate or public key.
+2. **Hardcoding the Certificate**: Storing certificates in the app bundle means you must ensure they’re securely stored and not exposed.
+3. **Maintenance Overhead**: Updating certificates in the app requires an app update, which can be cumbersome if you frequently rotate keys or certificates on the server.
+
+### **Conclusion**
+
+SSL Pinning is an important technique for securing communication in iOS apps, especially in cases where sensitive data is exchanged. By ensuring that the app only trusts a specific server’s certificate or public key, you can mitigate risks from MITM attacks and enhance the app’s overall security. However, it introduces challenges such as certificate management and potential app updates whenever certificates change. Use SSL pinning wisely, particularly for apps that handle critical or sensitive information.
+
+
+
 # SwiftUI
 
 ### **What is SwiftUI?**
